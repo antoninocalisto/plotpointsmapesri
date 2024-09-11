@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Pontos com Jimu</title>
+    <!-- Inclua as dependências da biblioteca Jimu -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.19/"></script>
+</head>
+<body>
+    <h1>Mapa de Pontos</h1>
+    <div id="viewDiv" style="height: 500px;"></div>
+
+    <script>
+        function getPointsFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pointsParam = urlParams.get('points');
+            if (pointsParam) {
+                return JSON.parse(decodeURIComponent(pointsParam));
+            }
+            return [];
+        }
+
+        function plotPointsOnMap(points) {
+            require(["esri/Map", "esri/views/MapView", "esri/Graphic", "esri/layers/GraphicsLayer"], function(Map, MapView, Graphic, GraphicsLayer) {
+
+                const map = new Map({
+                    basemap: "streets"
+                });
+
+                // Exemplo de inicialização do MapView
+                const mapView = new MapView({
+                    container: "viewDiv",  // ID do elemento HTML onde o mapa será exibido
+                    map: new Map({
+                        basemap: "streets-navigation-vector" // Basemap do mapa
+                    })
+                });
+
+                mapView.when(() => {
+                    const graphics = points.map(point => {
+                        return new Graphic({
+                            geometry: {
+                                type: "point",
+                                longitude: point.long,
+                                latitude: point.lat
+                            },
+                            symbol: {
+                                type: "simple-marker",
+                                color: "red",
+                                size: "8px"
+                            }
+                        });
+                    });
+
+                    // Adiciona os pontos ao MapView
+                    mapView.graphics.addMany(graphics);
+
+                     // Ajusta o zoom para garantir que todos os pontos estejam visíveis
+                    mapView.goTo(graphics)
+                        .catch(error => {
+                            console.error("Erro ao ajustar o zoom: ", error);
+                        });
+                });
+            });
+        }
+
+        // Obtém os pontos da URL e os plota no mapa
+        const points = getPointsFromURL();
+        plotPointsOnMap(points);
+    </script>
+</body>
+</html>
+
+<!-- 
+Resumo
+mapa.html Modificado:
+
+Agora, o mapa.html aceita um parâmetro points via query string. Esse parâmetro é uma lista de coordenadas em formato JSON, que é decodificada e usada para plotar os pontos no mapa.
+Página Principal (index.html):
+
+A página principal cria a lista de coordenadas.
+A lista é serializada em JSON, codificada, e passada como um parâmetro na URL do iframe.
+O iframe carrega o mapa.html com a lista de coordenadas, que então são plotadas no mapa.
+Execução
+Salve o código da primeira parte como mapa.html.
+Salve o código da segunda parte como index.html (ou outro nome de sua escolha).
+Abra index.html no seu navegador. A página principal gerará automaticamente a URL correta para o iframe e os pontos serão plotados no mapa dentro do iframe.
+
+-->
